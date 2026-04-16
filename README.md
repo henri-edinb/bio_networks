@@ -114,12 +114,21 @@ for step in range(100):
 * `n_dots`: Total number of present dots.
 * `dot_radius`: Radii per dot.
 * `max_dot_speed`: Maximum dot translation speed per step.
-* `num_directions`: Number of possible directions for unified motion coherence.
+* `num_directions`: Number of possible directions for unified motion coherence (e.g., 16).
 * `coherence`: Fraction of dots deliberately moving in the global specified path (0.0 to 1.0).
 * `noise_freq`: Ambient background noise.
 
 **`DriftingSingleBar`**
-* Specialized variant mimicking orientation tuning, taking similar `screen_size`, continuous velocity properties, width length bounds, and noise factors.
+* `screen_size`: Environment resolution (default: 32).
+* `bar_width`: Thickness of the drifting bar (default: 5.0).
+* `bar_length`: Length of the bar (`None` for an infinite wrap-around bar).
+* `max_phase_speed`: Maximum translation speed of the bar.
+* `num_directions`: Number of possible quantized drift directions (e.g., 16).
+* `contrast`: Contrast level of the bar, from 0.0 to 1.0.
+* `mean_luminance`: Mean background luminance from 0.0 to 1.0.
+* `soft_edges`: Boolean toggle for anti-aliased/soft edges on the bar.
+* `noise_freq`: Ambient background noise frequency.
+* `wrap_gap`: Distance gap before wrapping around the screen (default: 32).
 
 
 
