@@ -39,11 +39,15 @@ net = LateralInhibitoryLayer(hparams)
 * `'voltage'`: Updates based on voltage integration. 
 * `'rate'`: Updates based solely on rate changes.
 
-**Updates (`w_update`, `m_update`, `p_update`)**:
-The network processes synaptic updates over three main connectivity matrices:
-* **W (Feedforward)**: Connects inputs (x) to the layer (y). Updates usually utilize `'bcm_abs'` or `'hebbian'` variants.
-* **M (Lateral/Recurrent)**: Internal recurrent connections between units (y to y) for lateral inhibition. Typically set to `'hebbian'`.
-* **P (Temporal/Prediction)**: Connects previous states (y at t-1) to current states (y at t). Uses `'hebbian'` variants.
+**Updates (`w_update`, `p_update`, `m_update`)**:
+The network processes synaptic updates over three main connectivity matrices. Here are all supported plasticity rules for each matrix:
+
+* **W (Feedforward)**: Connects inputs (x) to the layer (y). 
+  * Available rules: `'hebbian'`, `'foldiak'`, `'oja'`, `'pehlevan'`, `'chklovskii'`, `'reconstruction'`, `'perceptron'`, `'bcm_abs'`, `'bcm_linear'`, `'bcm_sqr'`, `'bcm_thrs'`.
+* **P (Temporal/Prediction)**: Connects previous states (y at t-1) to current states (y at t). 
+  * Available rules: `'hebbian'`, `'chklovskii'`, `'foldiak'`, `'oja'`, `'pehlevan'`, `'reconstruction'`, `'perceptron'`, `'bcm_abs'`, `'bcm_linear'`, `'bcm_sqr'`, `'bcm_thrs'`, `'stdp'`.
+* **M (Lateral/Recurrent)**: Internal recurrent connections between units (y to y) for lateral inhibition. 
+  * Available rules: `'hebbian'`, `'chklovskii'`, `'foldiak'`, `'foldiak-constant'`, `'oja'`, `'pehlevan'`, `'perceptron'`, `'bcm_abs'`.
 
 ---
 
