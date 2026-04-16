@@ -53,28 +53,25 @@ The network processes synaptic updates over three main connectivity matrices. He
 
 ## Video Generators
 
-Generators provide spatial and spatiotemporal sequences to test the networks. They rely on simplified structural environments to mimic moving obstacles, gratings, or random dots.
-
-### Available Generators
-* `MultipleSpeedCrossingBar` (Crossbars)
-* `MovingDots`
-* `DriftingGratings`
-* `DotMotion`
-* `DriftingSingleBar`
+Generators provide spatial and spatiotemporal sequences to test the networks. They rely on simplified structural environments to mimic moving obstacles, gratings, or random dots. All generators are instantiated using a hyperparameter dictionary.
 
 ### Creating a Generator
-Generators can be initialized with environmental parameters like screen size, speeds, and noise frequency. 
+Each generator has a `default_params()` static method that returns a dictionary with its default configuration. You can modify these parameters and pass them to the generator's initialization method.
 
 ```python
 from generators import MultipleSpeedCrossingBar
 
-# Create a generator
-gen = MultipleSpeedCrossingBar(
-    req_screen_size=12,
-    req_bar_size=1,
-    req_max_bar_speed=1,
-    req_noise_freq=0.05
-)
+# Get default parameters
+gen_params = MultipleSpeedCrossingBar.default_params()
+
+# Modify parameters
+gen_params['screen_size'] = 12
+gen_params['bar_size'] = 1
+gen_params['speed'] = 1
+gen_params['noise'] = 0.05
+
+# Instantiate the generator
+gen = MultipleSpeedCrossingBar(gen_params)
 
 # Fetching samples during a training loop
 for step in range(100):
@@ -87,6 +84,42 @@ for step in range(100):
     # Retrieve the state
     frame = gen.get_current_frame()
 ```
+
+### Available Generators and Parameters
+
+**`MultipleSpeedCrossingBar`** (Crossbars)
+* `screen_size`: Size of the square screen constraint (e.g., 12).
+* `bar_size`: Width/thickness of the crossing bars.
+* `speed`: Maximum movement speed of the bars.
+* `noise`: Probability of drawing random noise values (noise frequency).
+
+**`MovingDots`**
+* `screen_size`: Size of the square screen.
+* `num_objects`: Total number of moving dots.
+* `speed`: Maximum speed of the moving dots.
+* `noise`: Frequency footprint of added background noise.
+
+**`DriftingGratings`**
+* `screen_size`: Environment resolution (default: 32).
+* `spatial_period`: Distance between grating wave peaks (e.g., 8.0).
+* `max_phase_speed`: Maximum phase shift speed per timestep.
+* `num_directions`: Number of possible quantized drift directions (e.g., 8).
+* `contrast`: Contrast level of the grating from 0.0 to 1.0.
+* `mean_luminance`: Mean frame brightness intensity from 0.0 to 1.0.
+* `square_wave`: Boolean toggle to use hard square waves instead of soft sinusoidal waves.
+* `noise_freq`: Added background noise likelihood.
+
+**`DotMotion`**
+* `screen_size`: Size of the square screen.
+* `n_dots`: Total number of present dots.
+* `dot_radius`: Radii per dot.
+* `max_dot_speed`: Maximum dot translation speed per step.
+* `num_directions`: Number of possible directions for unified motion coherence.
+* `coherence`: Fraction of dots deliberately moving in the global specified path (0.0 to 1.0).
+* `noise_freq`: Ambient background noise.
+
+**`DriftingSingleBar`**
+* Specialized variant mimicking orientation tuning, taking similar `screen_size`, continuous velocity properties, width length bounds, and noise factors.
 
 
 

@@ -19,10 +19,10 @@ class MultipleSpeedCrossingBar:
     def default_params():
         return {'screen_size': 12, 'bar_size': 1, 'speed': 1, 'noise': 0.1}
     
-    def __init__(self, req_screen_size, req_bar_size, req_max_bar_speed, req_noise_freq):
+    def __init__(self, hparams):
         self.name = 'crossbar'
-        self.x_size = req_screen_size
-        self.y_size = req_screen_size
+        self.x_size = hparams['screen_size']
+        self.y_size = hparams['screen_size']
         self.num_channels = 1
         self.current_x_bars_position = list()
         self.current_x_bars_direction = list()
@@ -30,9 +30,9 @@ class MultipleSpeedCrossingBar:
         self.current_y_bars_position = list()
         self.current_y_bars_direction = list()
         self.current_y_bars_speed = list()
-        self.speed_max = req_max_bar_speed
-        self.bar_size = req_bar_size
-        self.noise_freq = req_noise_freq
+        self.speed_max = hparams['speed']
+        self.bar_size = hparams['bar_size']
+        self.noise_freq = hparams['noise']
         random.seed(420)
         self.set_random_position()
         
@@ -186,29 +186,27 @@ class MovingDots:
     def default_params():
         return {'screen_size': 12, 'num_objects': 3, 'noise': 0.1, 'speed': 1}
     
-    def __init__(self, req_screen_size, req_number_of_dots, req_noise_freq, req_speed):
+    def __init__(self, hparams):
         self.name = 'dots'
         
-        self.x_size = req_screen_size
-        self.y_size = req_screen_size
+        self.x_size = hparams['screen_size']
+        self.y_size = hparams['screen_size']
         self.num_channels = 1
-        
         
         self.x_positions = list()
         self.y_positions = list()
         self.x_directions = list()
         self.y_directions = list()
-        self.number_of_dots = req_number_of_dots
+        self.number_of_dots = hparams['num_objects']
+        self.max_speed = hparams['speed']
+        self.noise_freq = hparams['noise']
 
         for i in range(0, self.number_of_dots):
             self.x_positions.append(np.random.randint(0, self.x_size))
             self.y_positions.append(np.random.randint(0, self.y_size))
-            self.x_directions.append(np.random.randint(-req_speed, req_speed))
-            self.y_directions.append(np.random.randint(-req_speed, req_speed))
+            self.x_directions.append(np.random.randint(-self.max_speed, self.max_speed))
+            self.y_directions.append(np.random.randint(-self.max_speed, self.max_speed))
             
-        self.max_speed = req_speed
-        self.noise_freq = req_noise_freq
-        
     def get_current_frame(self):
         for i in range(0, self.number_of_dots):
             self.frame[(self.x_positions[i]+1)%self.x_size][(self.y_positions[i]+1)%self.y_size] = 1
