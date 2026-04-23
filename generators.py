@@ -12,17 +12,18 @@ import csv
 import math
 from skimage.util import view_as_blocks
 
-#crossbar
+
+# crossbar
 class MultipleSpeedCrossingBar:
 
     @staticmethod
     def default_params():
-        return {'screen_size': 12, 'bar_size': 1, 'speed': 1, 'noise': 0.1}
-    
+        return {"screen_size": 12, "bar_size": 1, "speed": 1, "noise": 0.1}
+
     def __init__(self, hparams):
-        self.name = 'crossbar'
-        self.x_size = hparams['screen_size']
-        self.y_size = hparams['screen_size']
+        self.name = "crossbar"
+        self.x_size = hparams["screen_size"]
+        self.y_size = hparams["screen_size"]
         self.num_channels = 1
         self.current_x_bars_position = list()
         self.current_x_bars_direction = list()
@@ -30,93 +31,99 @@ class MultipleSpeedCrossingBar:
         self.current_y_bars_position = list()
         self.current_y_bars_direction = list()
         self.current_y_bars_speed = list()
-        self.speed_max = hparams['speed']
-        self.bar_size = hparams['bar_size']
-        self.noise_freq = hparams['noise']
+        self.speed_max = hparams["speed"]
+        self.bar_size = hparams["bar_size"]
+        self.noise_freq = hparams["noise"]
         random.seed(420)
         self.set_random_position()
-        
+
     def get_current_frame(self):
-        #draw x bars
+        # draw x bars
         for x_bar_idx, x_bar_pos in enumerate(self.current_x_bars_position):
-            for i in range(0,self.y_size):
+            for i in range(0, self.y_size):
                 for j in range(0, self.bar_size):
                     if (x_bar_pos + j) < self.x_size:
                         self.current_frame[i][x_bar_pos + j] = 1
-        
-        #draw y bar
+
+        # draw y bar
         for y_bar_idx, y_bar_pos in enumerate(self.current_y_bars_position):
-            for i in range(0,self.x_size):
+            for i in range(0, self.x_size):
                 for j in range(0, self.bar_size):
                     if (y_bar_pos + j) < self.y_size:
                         self.current_frame[y_bar_pos + j][i] = 1
-        
-        
+
         return self.current_frame
-    
+
     def get_blind_frame(self):
         return np.zeros((self.y_size, self.x_size, 1))
-    
+
     def get_label_for(self, label_category):
         match label_category:
-            case 'position_x':
+            case "position_x":
                 label_pos_x = np.zeros(self.y_size)
                 for _, x_bar_pos in enumerate(self.current_x_bars_position):
                     label_pos_x[x_bar_pos] = 1.0
                 return label_pos_x
-            case 'position_y':
+            case "position_y":
                 label_pos_y = np.zeros(self.x_size)
                 for _, y_bar_pos in enumerate(self.current_y_bars_position):
                     label_pos_y[y_bar_pos] = 1.0
                 return label_pos_y
-            case 'direction_x':
+            case "direction_x":
                 label_dir_x = np.zeros(2)
                 for _, x_bar_dir in enumerate(self.current_x_bars_direction):
                     label_dir_x[x_bar_dir] = 1.0
                 return label_dir_x
-            case 'direction_y':
+            case "direction_y":
                 label_dir_y = np.zeros(2)
                 for _, y_bar_dir in enumerate(self.current_y_bars_direction):
                     label_dir_y[y_bar_dir] = 1.0
                 return label_dir_y
-            case 'speed_x':
+            case "speed_x":
                 label_speed_x = np.zeros(self.speed_max)
                 for _, x_bar_speed in enumerate(self.current_x_bars_speed):
                     label_speed_x[x_bar_speed] = 1.0
                 return label_speed_x
-            case 'speed_y':
+            case "speed_y":
                 label_speed_y = np.zeros(self.speed_max)
                 for _, y_bar_speed in enumerate(self.current_y_bars_speed):
                     label_speed_y[y_bar_speed] = 1.0
                 return label_speed_y
             case _:
                 return None
-    
+
     def get_all_labels(self):
         label_obj = dict()
-        label_obj['position_x'] = np.zeros(self.y_size)
+        label_obj["position_x"] = np.zeros(self.y_size)
         for _, x_bar_pos in enumerate(self.current_x_bars_position):
-            label_obj['position_x'][x_bar_pos] = 1.0
-        label_obj['position_y'] = np.zeros(self.x_size)
+            label_obj["position_x"][x_bar_pos] = 1.0
+        label_obj["position_y"] = np.zeros(self.x_size)
         for _, y_bar_pos in enumerate(self.current_y_bars_position):
-            label_obj['position_y'][y_bar_pos] = 1.0
-        label_obj['direction_x'] = np.zeros(2)
+            label_obj["position_y"][y_bar_pos] = 1.0
+        label_obj["direction_x"] = np.zeros(2)
         for _, x_bar_dir in enumerate(self.current_x_bars_direction):
-            label_obj['direction_x'][x_bar_dir] = 1.0
-        label_obj['direction_y'] = np.zeros(2)
+            label_obj["direction_x"][x_bar_dir] = 1.0
+        label_obj["direction_y"] = np.zeros(2)
         for _, y_bar_dir in enumerate(self.current_y_bars_direction):
-            label_obj['direction_y'][y_bar_dir] = 1.0
-        label_obj['speed_x'] = np.zeros(self.speed_max)
+            label_obj["direction_y"][y_bar_dir] = 1.0
+        label_obj["speed_x"] = np.zeros(self.speed_max)
         for _, x_bar_speed in enumerate(self.current_x_bars_speed):
-            label_obj['speed_x'][x_bar_speed-1] = 1.0
-        label_obj['speed_y'] = np.zeros(self.speed_max)
+            label_obj["speed_x"][x_bar_speed - 1] = 1.0
+        label_obj["speed_y"] = np.zeros(self.speed_max)
         for _, y_bar_speed in enumerate(self.current_y_bars_speed):
-            label_obj['speed_y'][y_bar_speed-1] = 1.0
+            label_obj["speed_y"][y_bar_speed - 1] = 1.0
         return label_obj
-        
+
     def get_label_list(self):
-        return ["position_x", "position_y", "direction_x", "direction_y", "speed_x", "speed_y"]
-    
+        return [
+            "position_x",
+            "position_y",
+            "direction_x",
+            "direction_y",
+            "speed_x",
+            "speed_y",
+        ]
+
     def get_shape(self):
         return (self.y_size, self.x_size, self.num_channels)
 
@@ -125,8 +132,7 @@ class MultipleSpeedCrossingBar:
 
     def set_blind_frame(self):
         a = np.random.rand(self.y_size, self.x_size)
-        self.current_frame = a*(a < self.noise_freq)
-
+        self.current_frame = a * (a < self.noise_freq)
 
     def set_random_position(self):
         self.current_x_bars_position = list()
@@ -134,139 +140,182 @@ class MultipleSpeedCrossingBar:
         self.current_y_bars_position = list()
         self.current_y_bars_direction = list()
 
-        x_speed = randrange(self.speed_max)+1
+        x_speed = randrange(self.speed_max) + 1
         x_direction = randrange(2)
         self.current_x_bars_position.append(randrange(self.x_size))
         self.current_x_bars_direction.append(x_direction)
         self.current_x_bars_speed.append(x_speed)
 
-        y_speed = randrange(self.speed_max)+1
+        y_speed = randrange(self.speed_max) + 1
         y_direction = randrange(2)
         self.current_y_bars_position.append(randrange(self.y_size))
         self.current_y_bars_direction.append(y_direction)
         self.current_y_bars_speed.append(y_speed)
 
         a = np.random.rand(self.y_size, self.x_size)
-        self.current_frame = a*(a < self.noise_freq)
-    
+        self.current_frame = a * (a < self.noise_freq)
+
     def set_next_position(self):
         self.change_x()
         self.change_y()
 
         a = np.random.rand(self.y_size, self.x_size)
-        self.current_frame = a*(a < self.noise_freq)
-    
+        self.current_frame = a * (a < self.noise_freq)
+
     def change_x(self):
         new_x_positions = list()
         for x_bar_idx, x_bar_pos in enumerate(self.current_x_bars_position):
             new_x_pos = 0
             if self.current_x_bars_direction[x_bar_idx] == 0:
-                new_x_pos = (x_bar_pos + self.current_x_bars_speed[x_bar_idx]) % self.y_size
+                new_x_pos = (
+                    x_bar_pos + self.current_x_bars_speed[x_bar_idx]
+                ) % self.y_size
             else:
-                new_x_pos = (x_bar_pos - self.current_x_bars_speed[x_bar_idx]) % self.y_size
+                new_x_pos = (
+                    x_bar_pos - self.current_x_bars_speed[x_bar_idx]
+                ) % self.y_size
             new_x_positions.append(new_x_pos)
         self.current_x_bars_position = new_x_positions
-    
+
     def change_y(self):
         new_y_positions = list()
         for y_bar_idx, y_bar_pos in enumerate(self.current_y_bars_position):
             new_y_pos = 0
             if self.current_y_bars_direction[y_bar_idx] == 0:
-                new_y_pos = (y_bar_pos + self.current_y_bars_speed[y_bar_idx]) % self.x_size
+                new_y_pos = (
+                    y_bar_pos + self.current_y_bars_speed[y_bar_idx]
+                ) % self.x_size
             else:
-                new_y_pos = (y_bar_pos - self.current_y_bars_speed[y_bar_idx]) % self.x_size
+                new_y_pos = (
+                    y_bar_pos - self.current_y_bars_speed[y_bar_idx]
+                ) % self.x_size
             new_y_positions.append(new_y_pos)
         self.current_y_bars_position = new_y_positions
 
 
-#dots
+# dots
 class MovingDots:
 
     @staticmethod
     def default_params():
-        return {'screen_size': 12, 'num_objects': 3, 'noise': 0.1, 'speed': 1}
-    
+        return {"screen_size": 12, "num_objects": 3, "noise": 0.1, "speed": 1}
+
     def __init__(self, hparams):
-        self.name = 'dots'
-        
-        self.x_size = hparams['screen_size']
-        self.y_size = hparams['screen_size']
+        self.name = "dots"
+
+        self.x_size = hparams["screen_size"]
+        self.y_size = hparams["screen_size"]
         self.num_channels = 1
-        
+
         self.x_positions = list()
         self.y_positions = list()
         self.x_directions = list()
         self.y_directions = list()
-        self.number_of_dots = hparams['num_objects']
-        self.max_speed = hparams['speed']
-        self.noise_freq = hparams['noise']
+        self.number_of_dots = hparams["num_objects"]
+        self.max_speed = hparams["speed"]
+        self.noise_freq = hparams["noise"]
 
         for i in range(0, self.number_of_dots):
             self.x_positions.append(np.random.randint(0, self.x_size))
             self.y_positions.append(np.random.randint(0, self.y_size))
             self.x_directions.append(np.random.randint(-self.max_speed, self.max_speed))
             self.y_directions.append(np.random.randint(-self.max_speed, self.max_speed))
-            
+
     def get_current_frame(self):
         for i in range(0, self.number_of_dots):
-            self.frame[(self.x_positions[i]+1)%self.x_size][(self.y_positions[i]+1)%self.y_size] = 1
-            self.frame[(self.x_positions[i]+1)%self.x_size][(self.y_positions[i])%self.y_size] = 1
-            self.frame[(self.x_positions[i]+1)%self.x_size][(self.y_positions[i]-1)%self.y_size] = 1
-            self.frame[(self.x_positions[i]+1)%self.x_size][(self.y_positions[i]-2)%self.y_size] = 1
-            self.frame[(self.x_positions[i])%self.x_size][(self.y_positions[i]+1)%self.y_size] = 1
-            self.frame[(self.x_positions[i])%self.x_size][(self.y_positions[i])%self.y_size] = 1
-            self.frame[(self.x_positions[i])%self.x_size][(self.y_positions[i]-1)%self.y_size] = 1
-            self.frame[(self.x_positions[i])%self.x_size][(self.y_positions[i]-2)%self.y_size] = 1
-            self.frame[(self.x_positions[i]-1)%self.x_size][(self.y_positions[i]+1)%self.y_size] = 1
-            self.frame[(self.x_positions[i]-1)%self.x_size][(self.y_positions[i])%self.y_size] = 1
-            self.frame[(self.x_positions[i]-1)%self.x_size][(self.y_positions[i]-1)%self.y_size] = 1
-            self.frame[(self.x_positions[i]-1)%self.x_size][(self.y_positions[i]-2)%self.y_size] = 1
-            self.frame[(self.x_positions[i]-2)%self.x_size][(self.y_positions[i]+1)%self.y_size] = 1
-            self.frame[(self.x_positions[i]-2)%self.x_size][(self.y_positions[i])%self.y_size] = 1
-            self.frame[(self.x_positions[i]-2)%self.x_size][(self.y_positions[i]-1)%self.y_size] = 1
-            self.frame[(self.x_positions[i]-2)%self.x_size][(self.y_positions[i]-2)%self.y_size] = 1
+            self.frame[(self.x_positions[i] + 1) % self.x_size][
+                (self.y_positions[i] + 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] + 1) % self.x_size][
+                (self.y_positions[i]) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] + 1) % self.x_size][
+                (self.y_positions[i] - 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] + 1) % self.x_size][
+                (self.y_positions[i] - 2) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i]) % self.x_size][
+                (self.y_positions[i] + 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i]) % self.x_size][
+                (self.y_positions[i]) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i]) % self.x_size][
+                (self.y_positions[i] - 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i]) % self.x_size][
+                (self.y_positions[i] - 2) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 1) % self.x_size][
+                (self.y_positions[i] + 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 1) % self.x_size][
+                (self.y_positions[i]) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 1) % self.x_size][
+                (self.y_positions[i] - 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 1) % self.x_size][
+                (self.y_positions[i] - 2) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 2) % self.x_size][
+                (self.y_positions[i] + 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 2) % self.x_size][
+                (self.y_positions[i]) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 2) % self.x_size][
+                (self.y_positions[i] - 1) % self.y_size
+            ] = 1
+            self.frame[(self.x_positions[i] - 2) % self.x_size][
+                (self.y_positions[i] - 2) % self.y_size
+            ] = 1
 
-            
         return self.frame
-    
+
     def get_blind_frame(self):
         return self.frame
 
     def get_label_for(self, label_category):
         match label_category:
-            case 'direction_full':
-                label_dir_xy = np.zeros((self.max_speed*2)**2)
-                dir_index = ((self.current_direction_x+self.max_speed) * (self.max_speed*2)) + (self.current_direction_y+self.max_speed)
+            case "direction_full":
+                label_dir_xy = np.zeros((self.max_speed * 2) ** 2)
+                dir_index = (
+                    (self.current_direction_x + self.max_speed) * (self.max_speed * 2)
+                ) + (self.current_direction_y + self.max_speed)
                 label_dir_xy[dir_index] = 1.0
                 return label_dir_xy
-            case 'direction_x':
-                label_dir_x = np.zeros((self.max_speed*2))
-                label_dir_x[self.current_direction_x+self.max_speed] = 1.0
+            case "direction_x":
+                label_dir_x = np.zeros((self.max_speed * 2))
+                label_dir_x[self.current_direction_x + self.max_speed] = 1.0
                 return label_dir_x
-            case 'direction_y':
-                label_dir_y = np.zeros((self.max_speed*2))
-                label_dir_y[self.current_direction_y+self.max_speed] = 1.0
+            case "direction_y":
+                label_dir_y = np.zeros((self.max_speed * 2))
+                label_dir_y[self.current_direction_y + self.max_speed] = 1.0
                 return label_dir_y
             case _:
                 return None
-    
+
     def get_all_labels(self):
         label_obj = dict()
-        label_obj['direction_full'] = np.zeros((self.max_speed*2)**2)
-        dir_index = ((self.current_direction_x+self.max_speed) * (self.max_speed*2)) + (self.current_direction_y+self.max_speed)
-        label_obj['direction_full'][dir_index] = 1.0
-        label_obj['direction_x'] = np.zeros((self.max_speed*2))
-        label_obj['direction_x'][self.current_direction_x+self.max_speed] = 1.0
-        label_obj['direction_y'] = np.zeros((self.max_speed*2))
-        label_obj['direction_y'][self.current_direction_y+self.max_speed] = 1.0
+        label_obj["direction_full"] = np.zeros((self.max_speed * 2) ** 2)
+        dir_index = (
+            (self.current_direction_x + self.max_speed) * (self.max_speed * 2)
+        ) + (self.current_direction_y + self.max_speed)
+        label_obj["direction_full"][dir_index] = 1.0
+        label_obj["direction_x"] = np.zeros((self.max_speed * 2))
+        label_obj["direction_x"][self.current_direction_x + self.max_speed] = 1.0
+        label_obj["direction_y"] = np.zeros((self.max_speed * 2))
+        label_obj["direction_y"][self.current_direction_y + self.max_speed] = 1.0
         return label_obj
-        
+
     def get_label_list(self):
         return ["direction_full", "direction_x", "direction_y"]
-    
+
     def get_shape(self):
         return (self.y_size, self.x_size, self.num_channels)
-    
+
     def set_sampling_distribution(self, new_sd):
         pass
 
@@ -277,8 +326,8 @@ class MovingDots:
             self.x_directions[i] = np.random.randint(-self.max_speed, self.max_speed)
             self.y_directions[i] = np.random.randint(-self.max_speed, self.max_speed)
         a = np.random.rand(self.y_size, self.x_size)
-        self.frame = a*(a < self.noise_freq)
-    
+        self.frame = a * (a < self.noise_freq)
+
     def set_next_position(self):
         for i in range(0, self.number_of_dots):
             new_x = self.x_positions[i] + self.x_directions[i]
@@ -286,50 +335,52 @@ class MovingDots:
             self.x_positions[i] = new_x % self.x_size
             self.y_positions[i] = new_y % self.y_size
         a = np.random.rand(self.y_size, self.x_size)
-        self.frame = a*(a < self.noise_freq)
+        self.frame = a * (a < self.noise_freq)
 
 
-#gratings
+# gratings
 class DriftingGratings:
     @staticmethod
     def default_params():
         return {
-            'screen_size': 32,
-            'spatial_period': 8.0,
-            'max_phase_speed': 2,
-            'num_directions': 8,
-            'contrast': 1.0,
-            'mean_luminance': 0.5,
-            'square_wave': False,
-            'noise_freq': 0.0,
+            "screen_size": 32,
+            "spatial_period": 8.0,
+            "max_phase_speed": 2,
+            "num_directions": 8,
+            "contrast": 1.0,
+            "mean_luminance": 0.5,
+            "square_wave": False,
+            "noise_freq": 0.0,
         }
 
     def __init__(self, hparams):
-        self.name = 'gratings'
-        self.x_size = hparams['screen_size']
-        self.y_size = hparams['screen_size']
+        self.name = "gratings"
+        self.x_size = hparams["screen_size"]
+        self.y_size = hparams["screen_size"]
         self.num_channels = 1
 
-        self.spatial_period = float(hparams.get('spatial_period', 8.0))
-        self.speed_max = int(hparams.get('max_phase_speed', 2))
-        self.num_directions = int(hparams.get('num_directions', 8))
-        self.contrast = float(hparams.get('contrast', 1.0))
-        self.mean_luminance = float(hparams.get('mean_luminance', 0.5))
-        self.square_wave = bool(hparams.get('square_wave', False))
-        self.noise_freq = float(hparams.get('noise_freq', 0.0))
+        self.spatial_period = float(hparams.get("spatial_period", 8.0))
+        self.speed_max = int(hparams.get("max_phase_speed", 2))
+        self.num_directions = int(hparams.get("num_directions", 8))
+        self.contrast = float(hparams.get("contrast", 1.0))
+        self.mean_luminance = float(hparams.get("mean_luminance", 0.5))
+        self.square_wave = bool(hparams.get("square_wave", False))
+        self.noise_freq = float(hparams.get("noise_freq", 0.0))
 
         if self.spatial_period <= 0:
-            raise ValueError('spatial_period must be > 0')
+            raise ValueError("spatial_period must be > 0")
         if self.speed_max < 1:
-            raise ValueError('max_phase_speed must be >= 1')
+            raise ValueError("max_phase_speed must be >= 1")
         if self.num_directions < 2:
-            raise ValueError('num_directions must be >= 2')
+            raise ValueError("num_directions must be >= 2")
         if not 0.0 <= self.contrast <= 1.0:
-            raise ValueError('contrast must be between 0 and 1')
+            raise ValueError("contrast must be between 0 and 1")
         if not 0.0 <= self.mean_luminance <= 1.0:
-            raise ValueError('mean_luminance must be between 0 and 1')
+            raise ValueError("mean_luminance must be between 0 and 1")
 
-        self.direction_angles = np.linspace(0.0, 2.0 * np.pi, self.num_directions, endpoint=False)
+        self.direction_angles = np.linspace(
+            0.0, 2.0 * np.pi, self.num_directions, endpoint=False
+        )
         self.possible_speeds = list(range(1, self.speed_max + 1))
         self.speed_to_index = {s: i for i, s in enumerate(self.possible_speeds)}
 
@@ -344,7 +395,14 @@ class DriftingGratings:
         return (2.0 * np.pi * self.current_speed) / self.spatial_period
 
     def _phase_bin(self):
-        return int(np.floor((self.current_phase % (2.0 * np.pi)) / (2.0 * np.pi) * self.x_size)) % self.x_size
+        return (
+            int(
+                np.floor(
+                    (self.current_phase % (2.0 * np.pi)) / (2.0 * np.pi) * self.x_size
+                )
+            )
+            % self.x_size
+        )
 
     def set_random_position(self):
         self.current_phase = random.uniform(0.0, 2.0 * np.pi)
@@ -358,7 +416,9 @@ class DriftingGratings:
         self.set_random_position()
 
     def set_next_position(self):
-        self.current_phase = (self.current_phase + self._phase_increment()) % (2.0 * np.pi)
+        self.current_phase = (self.current_phase + self._phase_increment()) % (
+            2.0 * np.pi
+        )
 
     def get_current_frame(self):
         yy, xx = np.indices((self.y_size, self.x_size), dtype=float)
@@ -392,125 +452,137 @@ class DriftingGratings:
         angle_deg = (360.0 * self.current_direction_idx / self.num_directions) % 360.0
 
         match label_category:
-            case 'category_string':
-                return f'direction{self.current_direction_idx}'
-            case 'category_one_hot':
+            case "category_string":
+                return f"direction{self.current_direction_idx}"
+            case "category_one_hot":
                 label = np.zeros(self.num_directions)
                 label[self.current_direction_idx] = 1.0
                 return label
-            case 'phase':
+            case "phase":
                 label = np.zeros(self.x_size)
                 label[phase_bin] = 1.0
                 return label
-            case 'direction':
+            case "direction":
                 label = np.zeros(self.num_directions)
                 label[self.current_direction_idx] = 1.0
                 return label
-            case 'speed':
+            case "speed":
                 label = np.zeros(len(self.possible_speeds))
                 label[self.speed_to_index[self.current_speed]] = 1.0
                 return label
-            case 'direction_angle_deg':
+            case "direction_angle_deg":
                 return np.array([angle_deg], dtype=float)
-            case 'phase_rad':
+            case "phase_rad":
                 return np.array([self.current_phase], dtype=float)
             case _:
                 return None
 
     def get_all_labels(self):
         return {
-            'category_string': self.get_label_for('category_string'),
-            'category_one_hot': self.get_label_for('category_one_hot'),
-            'phase': self.get_label_for('phase'),
-            'direction': self.get_label_for('direction'),
-            'speed': self.get_label_for('speed'),
-            'direction_angle_deg': self.get_label_for('direction_angle_deg'),
-            'phase_rad': self.get_label_for('phase_rad'),
+            "category_string": self.get_label_for("category_string"),
+            "category_one_hot": self.get_label_for("category_one_hot"),
+            "phase": self.get_label_for("phase"),
+            "direction": self.get_label_for("direction"),
+            "speed": self.get_label_for("speed"),
+            "direction_angle_deg": self.get_label_for("direction_angle_deg"),
+            "phase_rad": self.get_label_for("phase_rad"),
         }
 
     def get_label_list(self):
         return [
-            'category_string', 'category_one_hot', 'phase',
-            'direction', 'speed', 'direction_angle_deg', 'phase_rad'
+            "category_string",
+            "category_one_hot",
+            "phase",
+            "direction",
+            "speed",
+            "direction_angle_deg",
+            "phase_rad",
         ]
 
     def get_action_label(self):
-        return np.concatenate((self.get_label_for('direction'), self.get_label_for('speed')))
+        return np.concatenate(
+            (self.get_label_for("direction"), self.get_label_for("speed"))
+        )
 
     def get_hyperparameters(self):
         return {
-            'vg_name': self.name,
-            'screen_size': self.x_size,
-            'spatial_period': self.spatial_period,
-            'speed_max': self.speed_max,
-            'num_directions': self.num_directions,
-            'contrast': self.contrast,
-            'mean_luminance': self.mean_luminance,
-            'square_wave': self.square_wave,
-            'noise': self.noise_freq,
+            "vg_name": self.name,
+            "screen_size": self.x_size,
+            "spatial_period": self.spatial_period,
+            "speed_max": self.speed_max,
+            "num_directions": self.num_directions,
+            "contrast": self.contrast,
+            "mean_luminance": self.mean_luminance,
+            "square_wave": self.square_wave,
+            "noise": self.noise_freq,
         }
 
     def get_extensive_name(self):
         return (
-            f'{self.name}_{self.spatial_period}_{self.speed_max}_'
-            f'{self.num_directions}_{self.contrast}_{self.square_wave}_{self.noise_freq}'
+            f"{self.name}_{self.spatial_period}_{self.speed_max}_"
+            f"{self.num_directions}_{self.contrast}_{self.square_wave}_{self.noise_freq}"
         )
 
     def get_shape(self):
         return (self.x_size, self.y_size, self.num_channels)
 
     def get_category_string_from_one_hot(self, one_hot):
-        return f'direction{int(np.argmax(one_hot))}'
+        return f"direction{int(np.argmax(one_hot))}"
 
     def get_name(self):
         return self.name
 
-#dot_motion
+
+# dot_motion
 class DotMotion:
     @staticmethod
     def default_params():
         return {
-            'screen_size': 32,
-            'n_dots': 64,
-            'dot_radius': 1,
-            'max_dot_speed': 2,
-            'num_directions': 16,
-            'coherence': 1.0,
-            'noise_freq': 0.0,
+            "screen_size": 32,
+            "n_dots": 64,
+            "dot_radius": 1,
+            "max_dot_speed": 2,
+            "num_directions": 16,
+            "coherence": 1.0,
+            "noise_freq": 0.0,
         }
 
     def __init__(self, hparams):
-        self.name = 'dot_motion'
-        self.x_size = int(hparams['screen_size'])
-        self.y_size = int(hparams['screen_size'])
+        self.name = "dot_motion"
+        self.x_size = int(hparams["screen_size"])
+        self.y_size = int(hparams["screen_size"])
         self.num_channels = 1
 
-        self.n_dots = int(hparams['n_dots'])
-        self.dot_radius = int(hparams['dot_radius'])
-        self.speed_max = int(hparams['max_dot_speed'])
-        self.num_directions = int(hparams.get('num_directions', 16))
-        self.coherence = float(hparams.get('coherence', 1.0))
-        self.noise_freq = float(hparams.get('noise_freq', 0.0))
+        self.n_dots = int(hparams["n_dots"])
+        self.dot_radius = int(hparams["dot_radius"])
+        self.speed_max = int(hparams["max_dot_speed"])
+        self.num_directions = int(hparams.get("num_directions", 16))
+        self.coherence = float(hparams.get("coherence", 1.0))
+        self.noise_freq = float(hparams.get("noise_freq", 0.0))
 
         if self.n_dots <= 0:
-            raise ValueError('n_dots must be > 0')
+            raise ValueError("n_dots must be > 0")
         if self.dot_radius < 0:
-            raise ValueError('dot_radius must be >= 0')
+            raise ValueError("dot_radius must be >= 0")
         if self.speed_max < 1:
-            raise ValueError('max_dot_speed must be >= 1')
+            raise ValueError("max_dot_speed must be >= 1")
         if self.num_directions < 1:
-            raise ValueError('num_directions must be >= 1')
+            raise ValueError("num_directions must be >= 1")
         if not 0.0 <= self.coherence <= 1.0:
-            raise ValueError('coherence must be between 0 and 1')
+            raise ValueError("coherence must be between 0 and 1")
 
         self.possible_speeds = list(range(1, self.speed_max + 1))
         self.possible_directions = [
-            2.0 * np.pi * idx / self.num_directions for idx in range(self.num_directions)
+            2.0 * np.pi * idx / self.num_directions
+            for idx in range(self.num_directions)
         ]
         self.direction_to_index = {
-            round(float(angle), 12): idx for idx, angle in enumerate(self.possible_directions)
+            round(float(angle), 12): idx
+            for idx, angle in enumerate(self.possible_directions)
         }
-        self.speed_to_index = {speed: idx for idx, speed in enumerate(self.possible_speeds)}
+        self.speed_to_index = {
+            speed: idx for idx, speed in enumerate(self.possible_speeds)
+        }
 
         self.current_direction_idx = 0
         self.current_direction = self.possible_directions[self.current_direction_idx]
@@ -560,9 +632,15 @@ class DotMotion:
         if n_incoherent > 0:
             random_dirs = np.random.randint(0, self.num_directions, size=n_incoherent)
             random_speeds = np.random.randint(1, self.speed_max + 1, size=n_incoherent)
-            random_angles = np.asarray(self.possible_directions, dtype=float)[random_dirs]
-            self.dot_positions[incoherent_idx, 0] += random_speeds * np.cos(random_angles)
-            self.dot_positions[incoherent_idx, 1] += random_speeds * np.sin(random_angles)
+            random_angles = np.asarray(self.possible_directions, dtype=float)[
+                random_dirs
+            ]
+            self.dot_positions[incoherent_idx, 0] += random_speeds * np.cos(
+                random_angles
+            )
+            self.dot_positions[incoherent_idx, 1] += random_speeds * np.sin(
+                random_angles
+            )
 
         self.dot_positions[:, 0] %= self.x_size
         self.dot_positions[:, 1] %= self.y_size
@@ -591,137 +669,153 @@ class DotMotion:
         centroid_y = self._centroid_bin_y()
 
         match label_category:
-            case 'category_string':
-                return f'{self.current_direction_idx}_dir'
-            case 'category_one_hot':
+            case "category_string":
+                return f"{self.current_direction_idx}_dir"
+            case "category_one_hot":
                 label = np.zeros(self.num_directions)
                 label[direction_index] = 1.0
                 return label
-            case 'direction':
+            case "direction":
                 label = np.zeros(self.num_directions)
                 label[direction_index] = 1.0
                 return label
-            case 'speed':
+            case "speed":
                 label = np.zeros(len(self.possible_speeds))
                 label[speed_index] = 1.0
                 return label
-            case 'position_x':
+            case "position_x":
                 label = np.zeros(self.x_size)
                 label[centroid_x] = 1.0
                 return label
-            case 'position_y':
+            case "position_y":
                 label = np.zeros(self.y_size)
                 label[centroid_y] = 1.0
                 return label
-            case 'coherence':
+            case "coherence":
                 return np.array([self.coherence], dtype=float)
-            case 'direction_angle_deg':
-                return np.array([(np.degrees(self.current_direction) % 360.0)], dtype=float)
-            case 'direction_x':
+            case "direction_angle_deg":
+                return np.array(
+                    [np.degrees(self.current_direction) % 360.0], dtype=float
+                )
+            case "direction_x":
                 return np.array([np.cos(self.current_direction)], dtype=float)
-            case 'direction_y':
+            case "direction_y":
                 return np.array([np.sin(self.current_direction)], dtype=float)
             case _:
                 return None
 
     def get_all_labels(self):
         return {
-            'category_string': self.get_label_for('category_string'),
-            'category_one_hot': self.get_label_for('category_one_hot'),
-            'direction': self.get_label_for('direction'),
-            'speed': self.get_label_for('speed'),
-            'position_x': self.get_label_for('position_x'),
-            'position_y': self.get_label_for('position_y'),
-            'coherence': self.get_label_for('coherence'),
-            'direction_angle_deg': self.get_label_for('direction_angle_deg'),
+            "category_string": self.get_label_for("category_string"),
+            "category_one_hot": self.get_label_for("category_one_hot"),
+            "direction": self.get_label_for("direction"),
+            "speed": self.get_label_for("speed"),
+            "position_x": self.get_label_for("position_x"),
+            "position_y": self.get_label_for("position_y"),
+            "coherence": self.get_label_for("coherence"),
+            "direction_angle_deg": self.get_label_for("direction_angle_deg"),
         }
 
     def get_label_list(self):
-        return ['category_string', 'category_one_hot', 'direction', 'speed', 'position_x', 'position_y', 'coherence', 'direction_angle_deg']
+        return [
+            "category_string",
+            "category_one_hot",
+            "direction",
+            "speed",
+            "position_x",
+            "position_y",
+            "coherence",
+            "direction_angle_deg",
+        ]
 
     def get_action_label(self):
-        return np.concatenate((self.get_label_for('direction'), self.get_label_for('speed')))
+        return np.concatenate(
+            (self.get_label_for("direction"), self.get_label_for("speed"))
+        )
 
     def get_hyperparameters(self):
         return {
-            'vg_name': self.name,
-            'screen_size': self.x_size,
-            'n_dots': self.n_dots,
-            'dot_radius': self.dot_radius,
-            'max_dot_speed': self.speed_max,
-            'num_directions': self.num_directions,
-            'coherence': self.coherence,
-            'noise': self.noise_freq,
+            "vg_name": self.name,
+            "screen_size": self.x_size,
+            "n_dots": self.n_dots,
+            "dot_radius": self.dot_radius,
+            "max_dot_speed": self.speed_max,
+            "num_directions": self.num_directions,
+            "coherence": self.coherence,
+            "noise": self.noise_freq,
         }
 
     def get_extensive_name(self):
         return (
-            f'{self.name}_{self.n_dots}_{self.dot_radius}_'
-            f'{self.speed_max}_{self.num_directions}_{self.coherence}_{self.noise_freq}'
+            f"{self.name}_{self.n_dots}_{self.dot_radius}_"
+            f"{self.speed_max}_{self.num_directions}_{self.coherence}_{self.noise_freq}"
         )
 
     def get_shape(self):
         return (self.x_size, self.y_size, self.num_channels)
 
     def get_category_string_from_one_hot(self, one_hot):
-        return f'{int(np.argmax(one_hot))}_dir'
+        return f"{int(np.argmax(one_hot))}_dir"
 
     def get_name(self):
         return self.name
-
 
 
 class DriftingSingleBar:
     @staticmethod
     def default_params():
         return {
-            'screen_size': 32,
-            'bar_width': 5.0,
-            'bar_length': None,
-            'max_phase_speed': 2,
-            'num_directions': 16,
-            'contrast': 1.0,
-            'mean_luminance': 0.0,
-            'soft_edges': True,
-            'noise_freq': 0.0,
-            'wrap_gap': 32,
+            "screen_size": 32,
+            "bar_width": 5.0,
+            "bar_length": None,
+            "max_phase_speed": 2,
+            "num_directions": 16,
+            "contrast": 1.0,
+            "mean_luminance": 0.0,
+            "soft_edges": True,
+            "noise_freq": 0.0,
+            "wrap_gap": 32,
         }
 
     def __init__(self, hparams):
-        self.name = 'drifting_single_bar'
-        self.x_size = int(hparams['screen_size'])
-        self.y_size = int(hparams['screen_size'])
+        self.name = "drifting_single_bar"
+        self.x_size = int(hparams["screen_size"])
+        self.y_size = int(hparams["screen_size"])
         self.num_channels = 1
 
-        self.bar_width = float(hparams.get('bar_width', 5.0))
-        self.bar_length = hparams.get('bar_length', None)
-        self.speed_max = int(hparams.get('max_phase_speed', 2))
-        self.num_directions = int(hparams.get('num_directions', 16))
-        self.contrast = float(hparams.get('contrast', 1.0))
-        self.mean_luminance = float(hparams.get('mean_luminance', 0.0))
-        self.soft_edges = bool(hparams.get('soft_edges', True))
-        self.noise_freq = float(hparams.get('noise_freq', 0.0))
-        self.wrap_gap = hparams.get('wrap_gap', None)
+        self.bar_width = float(hparams.get("bar_width", 5.0))
+        self.bar_length = hparams.get("bar_length", None)
+        self.speed_max = int(hparams.get("max_phase_speed", 2))
+        self.num_directions = int(hparams.get("num_directions", 16))
+        self.contrast = float(hparams.get("contrast", 1.0))
+        self.mean_luminance = float(hparams.get("mean_luminance", 0.0))
+        self.soft_edges = bool(hparams.get("soft_edges", True))
+        self.noise_freq = float(hparams.get("noise_freq", 0.0))
+        self.wrap_gap = hparams.get("wrap_gap", None)
 
         if self.speed_max < 1:
-            raise ValueError('max_phase_speed must be >= 1')
+            raise ValueError("max_phase_speed must be >= 1")
         if self.num_directions < 1:
-            raise ValueError('num_directions must be >= 1')
+            raise ValueError("num_directions must be >= 1")
         if self.bar_width <= 0:
-            raise ValueError('bar_width must be > 0')
+            raise ValueError("bar_width must be > 0")
         if self.bar_length is not None and float(self.bar_length) <= 0:
-            raise ValueError('bar_length must be > 0 or None')
+            raise ValueError("bar_length must be > 0 or None")
         if self.wrap_gap is not None and float(self.wrap_gap) < 0:
-            raise ValueError('wrap_gap must be >= 0 or None')
+            raise ValueError("wrap_gap must be >= 0 or None")
 
         self.possible_speeds = list(range(1, self.speed_max + 1))
         self.possible_directions = [
-            2.0 * np.pi * idx / self.num_directions for idx in range(self.num_directions)
+            2.0 * np.pi * idx / self.num_directions
+            for idx in range(self.num_directions)
         ]
         self.direction_to_index = {
-            round(float(angle), 12): idx for idx, angle in enumerate(self.possible_directions)
+            round(float(angle), 12): idx
+            for idx, angle in enumerate(self.possible_directions)
         }
-        self.speed_to_index = {speed: idx for idx, speed in enumerate(self.possible_speeds)}
+        self.speed_to_index = {
+            speed: idx for idx, speed in enumerate(self.possible_speeds)
+        }
 
         self.current_center_x = 0.0
         self.current_center_y = 0.0
@@ -806,9 +900,9 @@ class DriftingSingleBar:
             min_dist2 = np.min(dx * dx + dy * dy, axis=0)
 
             if self.soft_edges:
-                candidate = np.exp(-0.5 * (min_dist2 / (sigma ** 2)))
+                candidate = np.exp(-0.5 * (min_dist2 / (sigma**2)))
             else:
-                candidate = (min_dist2 <= (radius ** 2)).astype(float)
+                candidate = (min_dist2 <= (radius**2)).astype(float)
 
             profile = np.maximum(profile, candidate)
 
@@ -855,78 +949,288 @@ class DriftingSingleBar:
         return np.zeros((self.y_size, self.x_size), dtype=float)
 
     def get_label_for(self, label_category):
-        direction_index = self.direction_to_index[self._direction_key(self.current_direction)]
+        direction_index = self.direction_to_index[
+            self._direction_key(self.current_direction)
+        ]
         speed_index = self.speed_to_index[self.current_speed]
         x_bin = int(np.floor(self.current_center_x)) % self.x_size
         y_bin = int(np.floor(self.current_center_y)) % self.y_size
 
         match label_category:
-            case 'category_string':
-                angle_deg = (np.degrees(self.current_direction) % 360.0)
-                return f'{angle_deg:.1f}deg_speed{self.current_speed}_x{x_bin}_y{y_bin}'
-            case 'direction':
+            case "category_string":
+                angle_deg = np.degrees(self.current_direction) % 360.0
+                return f"{angle_deg:.1f}deg_speed{self.current_speed}_x{x_bin}_y{y_bin}"
+            case "direction":
                 label = np.zeros(self.num_directions)
                 label[direction_index] = 1.0
                 return label
-            case 'speed':
+            case "speed":
                 label = np.zeros(len(self.possible_speeds))
                 label[speed_index] = 1.0
                 return label
-            case 'position_x':
+            case "position_x":
                 label = np.zeros(self.x_size)
                 label[x_bin] = 1.0
                 return label
-            case 'position_y':
+            case "position_y":
                 label = np.zeros(self.y_size)
                 label[y_bin] = 1.0
                 return label
-            case 'direction_angle_deg':
-                return np.array([(np.degrees(self.current_direction) % 360.0)], dtype=float)
+            case "direction_angle_deg":
+                return np.array(
+                    [np.degrees(self.current_direction) % 360.0], dtype=float
+                )
             case _:
                 return None
 
     def get_all_labels(self):
         return {
-            'category_string': self.get_label_for('category_string'),
-            'direction': self.get_label_for('direction'),
-            'speed': self.get_label_for('speed'),
-            'position_x': self.get_label_for('position_x'),
-            'position_y': self.get_label_for('position_y'),
-            'direction_angle_deg': self.get_label_for('direction_angle_deg'),
+            "category_string": self.get_label_for("category_string"),
+            "direction": self.get_label_for("direction"),
+            "speed": self.get_label_for("speed"),
+            "position_x": self.get_label_for("position_x"),
+            "position_y": self.get_label_for("position_y"),
+            "direction_angle_deg": self.get_label_for("direction_angle_deg"),
         }
 
     def get_label_list(self):
-        return ['category_string', 'direction', 'speed', 'position_x', 'position_y', 'direction_angle_deg']
+        return [
+            "category_string",
+            "direction",
+            "speed",
+            "position_x",
+            "position_y",
+            "direction_angle_deg",
+        ]
 
     def get_action_label(self):
-        return np.concatenate((self.get_label_for('direction'), self.get_label_for('speed')))
+        return np.concatenate(
+            (self.get_label_for("direction"), self.get_label_for("speed"))
+        )
 
     def get_hyperparameters(self):
         return {
-            'vg_name': self.name,
-            'screen_size': self.x_size,
-            'bar_width': self.bar_width,
-            'bar_length': self.bar_length,
-            'max_phase_speed': self.speed_max,
-            'num_directions': self.num_directions,
-            'contrast': self.contrast,
-            'mean_luminance': self.mean_luminance,
-            'soft_edges': self.soft_edges,
-            'noise': self.noise_freq,
-            'wrap_gap': self.wrap_gap,
+            "vg_name": self.name,
+            "screen_size": self.x_size,
+            "bar_width": self.bar_width,
+            "bar_length": self.bar_length,
+            "max_phase_speed": self.speed_max,
+            "num_directions": self.num_directions,
+            "contrast": self.contrast,
+            "mean_luminance": self.mean_luminance,
+            "soft_edges": self.soft_edges,
+            "noise": self.noise_freq,
+            "wrap_gap": self.wrap_gap,
         }
 
     def get_extensive_name(self):
         return (
-            f'{self.name}_{self.bar_width}_{self.bar_length}_'
-            f'{self.speed_max}_{self.num_directions}_{self.noise_freq}_{self.wrap_gap}'
+            f"{self.name}_{self.bar_width}_{self.bar_length}_"
+            f"{self.speed_max}_{self.num_directions}_{self.noise_freq}_{self.wrap_gap}"
         )
 
     def get_shape(self):
         return (self.x_size, self.y_size, self.num_channels)
 
     def get_category_string_from_one_hot(self, one_hot):
-        return self.get_label_for('category_string')
+        return self.get_label_for("category_string")
+
+    def get_name(self):
+        return self.name
+
+
+# cifar image patches
+class CifarImagePatches:
+    """
+    Generator that yields random greyscale patches from CIFAR-10 images.
+
+    Whitening options (via ``whitening`` param):
+      - ``None``  : no whitening
+      - ``'svd'`` : PCA whitening (projects into eigenbasis, unit variance per component)
+      - ``'zca'`` : ZCA whitening (keeps patches in pixel space)
+
+    Whitening is fitted lazily on the first call to ``get_current_frame()``
+    (or explicitly via ``fit_whitening()``).
+    """
+
+    _RGB_WEIGHTS = np.array([0.2989, 0.5870, 0.1140])
+
+    @staticmethod
+    def default_params():
+        return {
+            "patch_size": 12,
+            "whitening": None,  # None | 'svd' | 'zca'
+            "whiten_eps": 1e-5,  # regularisation added to singular values
+        }
+
+    def __init__(self, hparams):
+        self.name = "cifar_patches"
+        self.patch_size = int(hparams.get("patch_size", 12))
+        self.whitening = hparams.get("whitening", None)
+        self.whiten_eps = float(hparams.get("whiten_eps", 1e-5))
+
+        self.x_size = self.patch_size
+        self.y_size = self.patch_size
+        self.num_channels = 1
+
+        self._grey_images = None  # (N, 1024) float64 in [0, 1]
+        self._W = None  # whitening matrix (d, d)
+        self._mean = None  # mean patch (d,)
+        self._whitening_fitted = False
+
+        self._current_image_idx = 0
+        self._current_row = 0
+        self._current_col = 0
+
+        self._load_data()
+        self.set_random_position()
+
+    # ------------------------------------------------------------------
+    # data loading
+    # ------------------------------------------------------------------
+
+    def _load_data(self):
+        # Try torchvision first (fast, reliable)
+        try:
+            import torchvision
+            import torchvision.transforms as T
+            import tempfile, os as _os
+
+            cache_dir = _os.path.join(tempfile.gettempdir(), "cifar10_tv")
+            ds = torchvision.datasets.CIFAR10(root=cache_dir, train=True, download=True)
+            data = np.array(ds.data, dtype=np.float64)  # (50000, 32, 32, 3)
+            rgb = data.reshape(-1, 32 * 32, 3) / 255.0  # (N, 1024, 3)
+            self._grey_images = (rgb * self._RGB_WEIGHTS).sum(axis=2)  # (N, 1024)
+            self._n_images = len(self._grey_images)
+            return
+        except Exception:
+            pass
+
+        # Try keras/tensorflow
+        try:
+            from tensorflow.keras.datasets import cifar10
+
+            (x_train, _), (x_test, _) = cifar10.load_data()
+            data = np.concatenate([x_train, x_test], axis=0).astype(
+                np.float64
+            )  # (60000,32,32,3)
+            rgb = data.reshape(-1, 32 * 32, 3) / 255.0
+            self._grey_images = (rgb * self._RGB_WEIGHTS).sum(axis=2)
+            self._n_images = len(self._grey_images)
+            return
+        except Exception:
+            pass
+
+        # Fallback: sklearn fetch_openml with cache-bust on checksum error
+        from sklearn.datasets import fetch_openml
+        import sklearn.datasets._base as _skbase, tempfile
+
+        def _fetch(data_home=None):
+            return fetch_openml(
+                name="cifar_10",
+                as_frame=True,
+                parser="auto",
+                **({} if data_home is None else {"data_home": data_home}),
+            )
+
+        try:
+            images = _fetch()
+        except ValueError:
+            # Corrupted cache — retry into a clean temp directory
+            images = _fetch(data_home=tempfile.mkdtemp())
+
+        n = len(images.data)
+        grey = np.empty((n, 32 * 32), dtype=np.float64)
+        for i in range(n):
+            rgb = images.data.iloc[i].values.reshape(3, 32 * 32).T
+            grey[i] = np.dot(rgb, self._RGB_WEIGHTS)
+        grey /= 255.0
+        self._grey_images = grey
+        self._n_images = n
+
+    # ------------------------------------------------------------------
+    # whitening
+    # ------------------------------------------------------------------
+
+    def fit_whitening(self, n_samples=10000):
+        """Fit the whitening transform on random patches. Called automatically
+        on the first ``get_current_frame()`` if whitening is requested."""
+        if self.whitening is None:
+            self._whitening_fitted = True
+            return
+
+        patches = []
+        for _ in range(n_samples):
+            idx = np.random.randint(self._n_images)
+            row = np.random.randint(0, 32 - self.patch_size + 1)
+            col = np.random.randint(0, 32 - self.patch_size + 1)
+            patches.append(self._extract_patch(idx, row, col).flatten())
+
+        X = np.array(patches, dtype=np.float64)
+        self._mean = X.mean(axis=0)
+        X -= self._mean
+
+        cov = (X.T @ X) / (len(X) - 1)
+        U, S, _ = np.linalg.svd(cov)
+
+        if self.whitening == "svd":
+            # PCA whitening: rotate into eigenbasis and normalise variance
+            self._W = (U / np.sqrt(S + self.whiten_eps)).T
+        elif self.whitening == "zca":
+            # ZCA whitening: stay in pixel space
+            self._W = U @ np.diag(1.0 / np.sqrt(S + self.whiten_eps)) @ U.T
+
+        else:
+            raise ValueError(
+                f"Unknown whitening option '{self.whitening}'. Use None, 'svd', or 'zca'."
+            )
+
+        self._whitening_fitted = True
+
+    def _whiten(self, patch_flat):
+        if self.whitening is None:
+            return patch_flat
+        return self._W @ (patch_flat - self._mean)
+
+    # ------------------------------------------------------------------
+    # patch extraction
+    # ------------------------------------------------------------------
+
+    def _extract_patch(self, image_idx, row, col):
+        img = self._grey_images[image_idx].reshape(32, 32)
+        return img[row : row + self.patch_size, col : col + self.patch_size]
+
+    # ------------------------------------------------------------------
+    # public interface (mirrors other generators)
+    # ------------------------------------------------------------------
+
+    def set_random_position(self):
+        self._current_image_idx = np.random.randint(self._n_images)
+        self._current_row = np.random.randint(0, 32 - self.patch_size + 1)
+        self._current_col = np.random.randint(0, 32 - self.patch_size + 1)
+
+    def get_current_frame(self):
+        if not self._whitening_fitted:
+            self.fit_whitening()
+
+        patch = self._extract_patch(
+            self._current_image_idx,
+            self._current_row,
+            self._current_col,
+        ).astype(np.float64)
+
+        if self.whitening is not None:
+            patch = self._whiten(patch.flatten()).reshape(
+                self.patch_size, self.patch_size
+            )
+
+        return patch.reshape(self.patch_size, self.patch_size, 1).copy()
+
+    def get_blind_frame(self):
+        return np.zeros((self.patch_size, self.patch_size, 1))
+
+    def get_shape(self):
+        return (self.y_size, self.x_size, self.num_channels)
 
     def get_name(self):
         return self.name
